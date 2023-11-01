@@ -23,7 +23,3 @@ type Move = Int -- what's the index into the column?
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 
 -- type Game = Location | Turn
-
-CheckMove :: Move -> Board -> Bool 
-
-MakeMove :: -> [Move] --Game 
