@@ -17,3 +17,22 @@ type Move = Int -- what's the index into the column?
 
 
 --MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
+checkWin:: Board -> Maybe Winner
+checkWin currentBoard{
+    if (checkVertical(currentBoard) != null) then return checkVertical(currentBoard)
+    else if (checkHorizontal(currentBoard) != null) then return checkHorizontal(currentBoard)
+    else if (checkDiagonal(currentBoard) != null) then return checkDiagonal(currentBoard)
+    else return null
+}
+ checkVertical:: Board -> Maybe Winner
+ checkVertical currentBoard{
+    --FILL OUT HERE
+ }
+    checkHorizontal:: Board -> Maybe Winner
+ checkVertical currentBoard{
+    --FILL OUT HERE
+ }
+  checkDiagonal:: Board -> Maybe Winner
+ checkVertical currentBoard{
+    --FILL OUT HERE
+ }
