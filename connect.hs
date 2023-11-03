@@ -25,3 +25,12 @@ type Move = Int -- what's the index into the column?
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 
 -- type Game = Location | Turn
+
+-- makeMove :: Move -> Board
+-- makeMove move =
+
+-- isValidMove :: Move -> Bool
+-- isValidMove move = 
+
+-- lstValidMoves :: Board -> [Move]
+-- lstValidMoves board = 
