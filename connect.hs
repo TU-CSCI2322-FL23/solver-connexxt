@@ -26,37 +26,35 @@ type Move = Int -- what's the index into the column?
 
 --MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 checkWin:: Board -> Maybe Winner
-checkWin currentBoard{
-    if (checkVertical(currentBoard) != null) then return checkVertical(currentBoard)
-    else if (checkHorizontal(currentBoard) != null) then return checkHorizontal(currentBoard)
-    else if (checkDiagonal(currentBoard) != null) then return checkDiagonal(currentBoard)
-    else return null
-}
+checkWin currentBoard = 
+    if (checkVertical(currentBoard) != null) then  checkVertical currentBoard
+    else if (checkHorizontal(currentBoard) != null) then  checkHorizontal currentBoard
+    else if (checkDiagonal(currentBoard) != null) then  checkDiagonal currentBoard
+    else  null
+
  checkVertical:: Board -> Maybe Winner
- checkVertical currentBoard{
-    if(checkFour(take 4 column) == Color) then return Color
-    else if (checkFour(take 4(drop 1 column)) == Color) then return Color
-    else if(checkFour(take 4(drop 2 column)) == Color) then return Color
-    else if(checkFour(take 4(drop 3 column)) == Color) then return Color
-    else return Null
-    where column = [x | x <- currentBoard, fst x]   -- this makes a list of the first element of every list
+ checkVertical currentBoard= findWin[checkFour x | x <- currentBoard]   -- this makes a list of the first element of every list
      
   
     --for( i <- 1-4; i ++){ -- checks the four win cases (Maybe make this a helper function)
     --    if (fst elements == snd elements) -- if first two match
         
     --}
- }
-    checkHorizontal:: Board -> Maybe Winner
- checkVertical currentBoard{
+ 
+checkHorizontal:: Board -> Maybe Winner
+ checkHorizontal currentBoard= undefined -- instead of taking one column and going four deep; take 4 columns and check them in lock step 
+
     --FILL OUT HERE
- }
-  checkDiagonal:: Board -> Maybe Winner
- checkVertical currentBoard{
+ 
+checkDiagonal:: Board -> Maybe Winner
+checkDiagonal currentBoard= undefined
     --FILL OUT HERE
- }
- checkFour::[Maybe Color, Maybe Color, Maybe Color, Maybe Color]-> Maybe Color
- checkFour [w, x, y, z]{
-    if ( w == x && x == y && y == z) then return x
-    else return Null
- }
+ 
+checkFour::[Maybe Color] -> Maybe Color
+checkFour (Just Red: Just Red:Just Red:Just Red: _) = Just Red
+checkFour (Just Black: Just Black:Just Black:Just Black: _) = Just Black
+checkFour (w: rest) = checkFour rest 
+checkFour lst = Nothing
+ 
+findWin::[Maybe Color]-> Maybe Color
+--pattern through list, if color return otherwise Nothing
