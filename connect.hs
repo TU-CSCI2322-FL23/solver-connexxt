@@ -26,7 +26,18 @@ checkWin currentBoard{
 }
  checkVertical:: Board -> Maybe Winner
  checkVertical currentBoard{
-    --FILL OUT HERE
+    if(checkFour(take 4 column) == Color) then return Color
+    else if (checkFour(take 4(drop 1 column)) == Color) then return Color
+    else if(checkFour(take 4(drop 2 column)) == Color) then return Color
+    else if(checkFour(take 4(drop 3 column)) == Color) then return Color
+    else return Null
+    where column = [x | x <- currentBoard, fst x]   -- this makes a list of the first element of every list
+     
+  
+    --for( i <- 1-4; i ++){ -- checks the four win cases (Maybe make this a helper function)
+    --    if (fst elements == snd elements) -- if first two match
+        
+    --}
  }
     checkHorizontal:: Board -> Maybe Winner
  checkVertical currentBoard{
@@ -35,4 +46,9 @@ checkWin currentBoard{
   checkDiagonal:: Board -> Maybe Winner
  checkVertical currentBoard{
     --FILL OUT HERE
+ }
+ checkFour::[Maybe Color, Maybe Color, Maybe Color, Maybe Color]-> Maybe Color
+ checkFour [w, x, y, z]{
+    if ( w == x && x == y && y == z) then return x
+    else return Null
  }
