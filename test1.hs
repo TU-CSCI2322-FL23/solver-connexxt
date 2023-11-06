@@ -1,9 +1,6 @@
 module TestCases where
 import Connect
---module Testing where
---import Scavenge
 import Data.Semigroup
---import Dictionaries
 import Control.Monad.Extra
 import Test.Grader.Core
 import Test.Grader.Rubric
@@ -16,6 +13,14 @@ import Control.Monad.Trans.RWS
 
 player1 = (Fred, Red)
 player2=(James, Black)
+
+testIsValidMove :: Grader String
+testIsValidMove = assess "isValidMove" 3 $ do
+    let tf = isValidMove tinyDict
+    check "that \"MAKE\" and \"I\" are valid moves" $ "MAKE" `shouldSatisfy` (tf "MKEKIOCHAOX") <> "I" `shouldSatisfy` (tf "MKEKIOCHAOX") 
+    check "that moves that can't be made are invalid" $ "MAKE" `shouldSatisfy`(not . tf "MKKIOCHAOX" ) 
+    check "that moves not in the dictionary are invalid" $ "MAKI" `shouldSatisfy`(not . tf "MKKIOCHAOX")
+
 
 testValidMoves :: Grader Int
 testValidMoves = assess "validMoves" 4 $ do
