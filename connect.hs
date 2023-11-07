@@ -4,16 +4,14 @@ import Data.Maybe
 import Data.Ratio ((%))
 import Data.Tuple (swap)
 import Debug.Trace
-import Graphics.Win32 (lBS_WANTKEYBOARDINPUT)
-import Text.XHtml (color, col)
 
 data Color = Red | Black deriving (Eq, Show)
 
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
-data Winner = Tie | Red | Black | Null 
+data Winner = Tie | Win Color
 --type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]]-- write a list of lists laterrr
-type Game = (Board, Color, Winner)
+type Game = (Board, Color)
 type Move = Int -- what's the index into the column?
 -- in connect 4, you can only choose the x coordinate
 -- so you can only look @ which List you're affecting
@@ -34,7 +32,7 @@ makeMove (board, playerColor) column
         dropPiece :: Board -> Move -> Color -> Board
         dropPiece [] _ _ = []
         dropPiece (c:cols) 0 color = placePiece c cols : c
-        dropPiece (c: cols) n color = col : dropPiece cols (n-1) color
+        dropPiece (c: cols) n color = c : dropPiece cols (n-1) color
         placePiece :: [Maybe Color] -> Color -> [Maybe Color]
         placePiece [] _ = []
         placePiece (Nothing:rest) color = Just color: rest
