@@ -25,36 +25,40 @@ type Move = Int -- what's the index into the column?
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 
 --MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
-checkWin:: Board -> Maybe Winner
+checkWin:: Board -> Maybe Winner  --might want to change input to game type later
 checkWin currentBoard = 
-    if (checkVertical(currentBoard) != null) then  checkVertical currentBoard
-    else if (checkHorizontal(currentBoard) != null) then  checkHorizontal currentBoard
-    else if (checkDiagonal(currentBoard) != null) then  checkDiagonal currentBoard
-    else  null
+     (checkVertical currentBoard) `combineChecks` (checkHorizontal currentBoard ) `combineChecks` (checkDiagonal currentBoard) -- Dr Fogarty Approved !
+
+combineChecks:: Maybe a -> Maybe a -> Maybe a --Dr Fogarty Approved
+combineChecks (Just x) _ = Just x
+combineChecks Nothing (Just xx) = Just xx
+combineChecks Nothing Nothing= Nothing
 
  checkVertical:: Board -> Maybe Winner
- checkVertical currentBoard= findWin[checkFour x | x <- currentBoard]   -- this makes a list of the first element of every list
-     
-  
-    --for( i <- 1-4; i ++){ -- checks the four win cases (Maybe make this a helper function)
-    --    if (fst elements == snd elements) -- if first two match
-        
-    --}
+ checkVertical currentBoard= findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
  
 checkHorizontal:: Board -> Maybe Winner
- checkHorizontal currentBoard= undefined -- instead of taking one column and going four deep; take 4 columns and check them in lock step 
+checkHorizontal currentBoard=  
+    findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
+    --checkFour y | y <- currentBoard, y == fst currentBoard] 
+-- list of head colfumns where columkn comes from board
+-- instead of taking one column and going four deep; take 4 columns and check them in lock step 
 
     --FILL OUT HERE
  
 checkDiagonal:: Board -> Maybe Winner
 checkDiagonal currentBoard= undefined
     --FILL OUT HERE
+    -- so like using check four across but dropping the first one from the second and the first two from the third and then the firsth three from the fourth column and then doing that all resurvibely
  
-checkFour::[Maybe Color] -> Maybe Color
+checkFour::[Maybe Color] -> Maybe Color --Dr Fogarty Approved!
 checkFour (Just Red: Just Red:Just Red:Just Red: _) = Just Red
 checkFour (Just Black: Just Black:Just Black:Just Black: _) = Just Black
 checkFour (w: rest) = checkFour rest 
 checkFour lst = Nothing
+
+-- check four across where I would take in 4 clukmns and I pattern match the head
+-- so like (red: _) (red: _) (red: _)
  
 findWin::[Maybe Color]-> Maybe Color
 --pattern through list, if color return otherwise Nothing
