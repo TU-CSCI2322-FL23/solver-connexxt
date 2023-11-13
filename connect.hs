@@ -38,8 +38,9 @@ combineChecks Nothing Nothing= Nothing
  checkVertical currentBoard= findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
  
 checkHorizontal:: Board -> Maybe Winner
-checkHorizontal currentBoard=  
-    findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
+checkHorizontal currentBoard=
+    findWin[checkFourAcross one two three four]  -- NOT DONE
+    --findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
     --checkFour y | y <- currentBoard, y == fst currentBoard] 
 -- list of head colfumns where columkn comes from board
 -- instead of taking one column and going four deep; take 4 columns and check them in lock step 
@@ -47,7 +48,8 @@ checkHorizontal currentBoard=
     --FILL OUT HERE
  
 checkDiagonal:: Board -> Maybe Winner
-checkDiagonal currentBoard= undefined
+checkDiagonal currentBoard= 
+    checkFourAcross (head currentBoard) (head (drop 1 currentBoard)) (head (drop 2 currentBoard)) ( head (drop 3 currentBoard))
     --FILL OUT HERE
     -- so like using check four across but dropping the first one from the second and the first two from the third and then the firsth three from the fourth column and then doing that all resurvibely
  
@@ -56,6 +58,12 @@ checkFour (Just Red: Just Red:Just Red:Just Red: _) = Just Red
 checkFour (Just Black: Just Black:Just Black:Just Black: _) = Just Black
 checkFour (w: rest) = checkFour rest 
 checkFour lst = Nothing
+
+checkFourAcross:: [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> Maybe Color
+checkFourAcross (Just Red: _ ) (Just Red: _ )(Just Red: _ )(Just Red: _ ) = Just Red
+checkFourAcross (Just Black: _ )(Just Black: _ )(Just Black: _ )(Just Black: _ ) = Just Black
+checkFourAcross (c: a )(c: b )(c: y )(c: d ) = checkFourAcross a b y d
+checkFourAcross z y x a = Nothing 
 
 -- check four across where I would take in 4 clukmns and I pattern match the head
 -- so like (red: _) (red: _) (red: _)
