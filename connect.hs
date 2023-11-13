@@ -35,10 +35,10 @@ combineChecks Nothing (Just xx) = Just xx
 combineChecks Nothing Nothing= Nothing
 
  checkVertical:: Board -> Maybe Winner
- checkVertical currentBoard= findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
+ checkVertical currentBoard = findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
  
 checkHorizontal:: Board -> Maybe Winner
-checkHorizontal currentBoard=
+checkHorizontal (one : two : three : four : rest)=
     findWin[checkFourAcross one two three four]  -- NOT DONE
     --findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
     --checkFour y | y <- currentBoard, y == fst currentBoard] 
