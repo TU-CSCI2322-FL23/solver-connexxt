@@ -12,11 +12,13 @@ data Winner = Tie | Win Color
 --type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]]-- write a list of lists laterrr
 type Game = (Board, Color)
+
 type Move = Int -- what's the index into the column?
 -- in connect 4, you can only choose the x coordinate
 -- so you can only look @ which List you're affecting
 
 -- Data Winner = Tie | Won Color deriving (Eq, Show) --You canot share constructors, for instance between Color and Winner. The solution is to have Winner *store* a color in one of the constructors
+
 
 -- whosTurn :: Player -> Bool
 -- whosTurn person =
@@ -52,6 +54,10 @@ isValidMove board column
         getColumn (c:cols) 0 = c
         getColumn (c: cols) n = getColumn cols (n-1)
 
+-- isValidMove :: Move -> Bool
+-- isValidMove move = 
+
 
 lstValidMoves :: Board -> [Move]
 lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove board col]
+
