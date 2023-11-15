@@ -45,7 +45,7 @@ checkHorizontal [one , two , three , four , five, six, seven]=
         almostEndFour = checkFourAcross three four five six
         endFour = checkFourAcross four five six seven
     in findWin[firstFour, middleFour, almostEndFour, endFour] 
-checkHorizontal [_] = error " why are the dimensions of your board weird?" -- ask Dr Fogarty to look @
+checkHorizontal lst = error " why are the dimensions of your board weird?" -- Dr Fogarty Approved!
     --findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
     --checkFour y | y <- currentBoard, y == fst currentBoard] 
 -- list of head colfumns where columkn comes from board
