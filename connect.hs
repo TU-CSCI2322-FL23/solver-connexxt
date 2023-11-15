@@ -25,7 +25,7 @@ type Move = Int -- what's the index into the column?
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 
 --MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
-checkWin:: Board -> Maybe Winner  --might want to change input to game type later
+checkWin:: Game -> Maybe Winner  --might want to change input to game type later
 checkWin currentBoard = 
      (checkVertical currentBoard) `combineChecks` (checkHorizontal currentBoard ) `combineChecks` (checkDiagonal currentBoard) -- Dr Fogarty Approved !
 
@@ -34,12 +34,18 @@ combineChecks (Just x) _ = Just x
 combineChecks Nothing (Just xx) = Just xx
 combineChecks Nothing Nothing= Nothing
 
- checkVertical:: Board -> Maybe Winner
- checkVertical currentBoard = findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
+checkVertical:: Board -> Maybe Winner
+checkVertical currentBoard = findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
  
-checkHorizontal:: Board -> Maybe Winner
-checkHorizontal (one : two : three : four : rest)=
-    findWin[checkFourAcross one two three four]  -- NOT DONE
+checkHorizontal:: Board -> Maybe Winner -- Dr Fogarty Approved!
+checkHorizontal [one , two , three , four , five, six, seven]=
+    let 
+        firstFour = checkFourAcross one two three four
+        middleFour = checkFourAcross two three four five
+        almostEndFour = checkFourAcross three four five six
+        endFour = checkFourAcross four five six seven
+    in findWin[firstFour, middleFour, almostEndFour, endFour] 
+checkHorizontal [_] = error " why are the dimensions of your board weird?" -- ask Dr Fogarty to look @
     --findWin[ head column | column <- currentBoard] -- if I don't make a new helper 
     --checkFour y | y <- currentBoard, y == fst currentBoard] 
 -- list of head colfumns where columkn comes from board
@@ -59,7 +65,7 @@ checkFour (Just Black: Just Black:Just Black:Just Black: _) = Just Black
 checkFour (w: rest) = checkFour rest 
 checkFour lst = Nothing
 
-checkFourAcross:: [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> Maybe Color
+checkFourAcross:: [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> Maybe Color -- Dr Fogarty Approved!
 checkFourAcross (Just Red: _ ) (Just Red: _ )(Just Red: _ )(Just Red: _ ) = Just Red
 checkFourAcross (Just Black: _ )(Just Black: _ )(Just Black: _ )(Just Black: _ ) = Just Black
 checkFourAcross (c: a )(c: b )(c: y )(c: d ) = checkFourAcross a b y d
@@ -68,5 +74,14 @@ checkFourAcross z y x a = Nothing
 -- check four across where I would take in 4 clukmns and I pattern match the head
 -- so like (red: _) (red: _) (red: _)
  
-findWin::[Maybe Color]-> Maybe Color
+findWin::[Maybe Color]-> Maybe Color --Dr Fogarty Approved
+findWin potentialWins = 
+    if  if Just Red `elem` potentialWins  && Just Black `elem` potentialWins then error "multiple winners"
+    else if Just Red `elem` potentialWins then Just Red
+    else if Just Black `elem` potentialWins then Just Black
+    else Nothing 
+-- careful ab preferenc e for Just Red, might be issue in sprint 2
+--findWind [Just Red: Just Red : Just Red : Just Red ] = Just Red
+--findWind [Just Black : Just Black : Just Black : Just Black ] = Just Black
+--findWind [_ : _ : _ : _ ] = Nothing 
 --pattern through list, if color return otherwise Nothing
