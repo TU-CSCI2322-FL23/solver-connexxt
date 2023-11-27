@@ -1,19 +1,28 @@
 module TestCases where
 
 import Connect
-
--- import Test.Hspec
+import Control.Monad.Extra
+import Control.Monad.Trans.RWS (RWST (runRWST))
+import Data.List
+import Data.Semigroup
+import Test.Grader.Core
+import Test.Grader.Eval
+import Test.Grader.Parsing
+import Test.Grader.Parsing.Util
+import Test.Grader.Rubric
+import Test.Grader.Tests
 
 -- player1 = (Fred, Red)
 
 -- player2 = (James, Black)
 
 -- main :: IO ()
--- main = hspec $ do
+
 makeMove :: Grader String
-makeMove = assess "checkWin" $ do
+makeMove = assess "checkWin" 3 $ do
   it "returns Just Red when there is a vertical win for Red" $
     checkWin
+      check
       [ [Just Red, Just Red, Just Red, Just Red],
         [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing],
@@ -47,3 +56,15 @@ makeMove = assess "checkWin" $ do
         [Nothing, Nothing, Nothing, Just Black]
       ]
       `shouldBe` Nothing
+
+main :: Grader String
+main = describe "final" $ do
+  describe "sprint" $ do
+    makeMove
+
+runTests :: Int -> Bool -> IO ()
+runTests verb force = do
+  let a = runGrader main
+  format <- makeFormat verb force "project"
+  runRWST a () format
+  return ()
