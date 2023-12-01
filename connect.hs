@@ -61,3 +61,20 @@ isValidMove board column
 lstValidMoves :: Board -> [Move]
 lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove board col]
 
+
+
+showGame :: Game -> String
+showGame (board, Red) = showBoard board ++ "\nRed Player's Turn\n"
+showGame (board, Black) = showBoard board ++ "\nBlack Player's Turn\n"
+
+showBoard :: Board -> String
+showBoard (b:[]) = showLine b ++ "\n===-----------------------==="
+showBoard (b:board) = showLine b ++ "\n-----------------------------\n" ++ showBoard board
+
+showLine :: [Maybe Color] -> String
+showLine lst = "|" ++ intercalate "|" (map showColor lst) ++ "|"
+
+showColor :: Maybe Color -> String
+showColor (Just Red) = " " ++ show Red ++ " "
+showColor (Just Black) = " " ++ show Black ++ " "
+showColor Nothing = "   "
