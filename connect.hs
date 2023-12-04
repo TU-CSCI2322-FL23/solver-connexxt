@@ -53,9 +53,17 @@ checkHorizontal lst = error " why are the dimensions of your board weird?" -- Dr
 
     --FILL OUT HERE
  
-checkDiagonal:: Board -> Maybe Winner
-checkDiagonal currentBoard= 
-    checkFourAcross (head currentBoard) (head (drop 1 currentBoard)) (head (drop 2 currentBoard)) ( head (drop 3 currentBoard))
+checkDiagonal:: Board -> Maybe Color --Dr Fogarty Approved
+checkDiagonal [col1, col2, col3]  = Nothing
+checkDiagonal (col1: col2: col3 : col4 : rest)= 
+    let beginning = checkFourAcross col1 (drop 1 col2) (drop 2 col3) (drop 3 col4)
+        later = checkDiagonal (col2 : col3 : col4 : rest)
+   -- checkFourAcross ( drop 1 col1) (drop 2 col2) (drop 3 col3) (drop 4 col4)
+  --  checkFourAcross (drop 2 col1) (drop 3 col2) (drop 4 col3) (drop 5 col4)
+    --checkFourAcross (drop 3 col1) (drop 4 col2) (drop 5 col3) (drop 6 col4)
+    in findWin [beginning, later]
+checkDiagonal lst = error "Incorrect Board Dimensions!"
+    
     --FILL OUT HERE
     -- so like using check four across but dropping the first one from the second and the first two from the third and then the firsth three from the fourth column and then doing that all resurvibely
  
