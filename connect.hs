@@ -25,18 +25,20 @@ type Move = Int -- what's the index into the column?
 
 --MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 checkWin:: Game -> Maybe Winner  --might want to change input to game type later
-checkWin currentBoard = 
-     (checkVertical currentBoard) `combineChecks` (checkHorizontal currentBoard ) `combineChecks` (checkDiagonal currentBoard) -- Dr Fogarty Approved !
+checkWin game@(currentBoard, player) = -- Dr Fogarty Approved !
+     case findWin[(checkVertical currentBoard) , (checkHorizontal currentBoard ) , (checkDiagonal currentBoard)] of 
+        Just pl -> Just (Win pl) 
+        Nothing -> if ( validMoves game == [] ) then Just Tie else Nothing
 
 combineChecks:: Maybe a -> Maybe a -> Maybe a --Dr Fogarty Approved
 combineChecks (Just x) _ = Just x
 combineChecks Nothing (Just xx) = Just xx
 combineChecks Nothing Nothing= Nothing
 
-checkVertical:: Board -> Maybe Winner
+checkVertical:: Board -> Maybe Color
 checkVertical currentBoard = findWin[checkFour x | x <- currentBoard]   -- Dr Fogarty Approved!
  
-checkHorizontal:: Board -> Maybe Winner -- Dr Fogarty Approved!
+checkHorizontal:: Board -> Maybe Color -- Dr Fogarty Approved!
 checkHorizontal [one , two , three , four , five, six, seven]=
     let 
         firstFour = checkFourAcross one two three four
@@ -75,7 +77,7 @@ checkFour lst = Nothing
 checkFourAcross:: [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> [Maybe Color] -> Maybe Color -- Dr Fogarty Approved!
 checkFourAcross (Just Red: _ ) (Just Red: _ )(Just Red: _ )(Just Red: _ ) = Just Red
 checkFourAcross (Just Black: _ )(Just Black: _ )(Just Black: _ )(Just Black: _ ) = Just Black
-checkFourAcross (c: a )(c: b )(c: y )(c: d ) = checkFourAcross a b y d
+checkFourAcross (_: a )(_: b )(_: y )(_: d ) = checkFourAcross a b y d
 checkFourAcross z y x a = Nothing 
 
 -- check four across where I would take in 4 clukmns and I pattern match the head
@@ -83,7 +85,7 @@ checkFourAcross z y x a = Nothing
  
 findWin::[Maybe Color]-> Maybe Color --Dr Fogarty Approved
 findWin potentialWins = 
-    if  if Just Red `elem` potentialWins  && Just Black `elem` potentialWins then error "multiple winners"
+    if Just Red `elem` potentialWins  && Just Black `elem` potentialWins then error "multiple winners"
     else if Just Red `elem` potentialWins then Just Red
     else if Just Black `elem` potentialWins then Just Black
     else Nothing 
@@ -101,12 +103,12 @@ makeMove (board, playerColor) column
         updatedBoard = dropPiece board column playerColor
         dropPiece :: Board -> Move -> Color -> Board
         dropPiece [] _ _ = []
-        dropPiece (c:cols) 0 color = placePiece c cols : c
+        dropPiece (c:cols) 0 color = (placePiece c color) : cols
         dropPiece (c: cols) n color = c : dropPiece cols (n-1) color
         placePiece :: [Maybe Color] -> Color -> [Maybe Color]
         placePiece [] _ = []
         placePiece (Nothing:rest) color = Just color: rest
-        placePiece (piece:rest) _ = piece : placePiece rest 
+        placePiece (piece:rest) color = piece : (placePiece rest color)
         nextPlayerColor Red = Black
         nextPlayerColor Black = Red
 
@@ -129,4 +131,6 @@ isValidMove board column
 lstValidMoves :: Board -> [Move]
 lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove board col]
 
+validMoves:: Game -> [Move] --dr fogarty suggests:
+validMoves (board, color) = [num | (num, col) <- zip [0..] board, isNothing (head col)]
 
