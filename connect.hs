@@ -217,3 +217,4 @@ processFile :: FilePath -> Bool -> Int -> IO ()
 processFile filename exhaustive depth = do 
     -- read the board from file
     -- perform stuff based on flags 
+    -- number 8 from second sprint 
