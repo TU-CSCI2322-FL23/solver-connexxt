@@ -1,7 +1,7 @@
-module TestCases where
+module MainTest where
 
 import Connect
-import Control.Monad
+import Control.Monad ()
 import Data.List
 import System.IO
 
@@ -9,14 +9,8 @@ type Test = IO Bool
 
 type TestResult = (String, Bool)
 
-assertEqual :: (Eq a, Show a) => String -> a -> a -> IO Bool
-assertEqual label expected actual = do
-  let result = expected == actual
-  putStrLn $ label ++ " - " ++ if result then "Passed" else "Failed"
-  pure result
-
 emptyGame :: Game
-emptyGame = (emptyBoard, Red)
+emptyGame = (emptyBoard, Black)
 
 player1 :: Color
 player1 = Black
@@ -25,15 +19,6 @@ player2 :: Color
 player2 = Red
 
 -- test cases for each function --
-
-main :: IO ()
-main = do
-  putStrLn "Running tests..."
-  testCheckWin
-  testMakeMove
-  testIsValidMove
-  testValidMoves
-  putStrLn "All tests passed!"
 
 -- Test the checkWin function
 testCheckWin :: IO ()
@@ -48,20 +33,20 @@ testCheckWin = do
   where
     initialBoard = replicate 6 (replicate 7 Nothing)
     winningBoard =
-      [ [Just Red, Just Red, Just Red, Nothing, Nothing, Nothing, Nothing]
-      , [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-      , [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-      , [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-      , [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-      , [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+      [ [Just Red, Just Red, Just Red, Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
       ]
     tieBoard =
-      [ [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red]
-      , [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red]
-      , [Just Black, Just Red, Just Black, Just Red, Just Black, Just Red, Just Black]
-      , [Just Black, Just Red, Just Black, Just Red, Just Black, Just Red, Just Black]
-      , [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red]
-      , [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red]
+      [ [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red],
+        [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red],
+        [Just Black, Just Red, Just Black, Just Red, Just Black, Just Red, Just Black],
+        [Just Black, Just Red, Just Black, Just Red, Just Black, Just Red, Just Black],
+        [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red],
+        [Just Red, Just Black, Just Red, Just Black, Just Red, Just Black, Just Red]
       ]
 
 -- Test the makeMove function
@@ -92,8 +77,8 @@ testValidMoves = do
       game2 = makeMove game1 0
       game3 = makeMove game2 1
   putStrLn "Testing validMoves..."
-  assert (validMoves game1 == [0..6]) "Test Case 1 Failed"
-  assert (validMoves game3 == [2..6]) "Test Case 2 Failed"
+  assert (validMoves game1 == [0 .. 6]) "Test Case 1 Failed"
+  assert (validMoves game3 == [2 .. 6]) "Test Case 2 Failed"
   where
     initialBoard = replicate 6 (replicate 7 Nothing)
 
@@ -115,11 +100,12 @@ testValidFull = do
       validMovesFull = isValidMoves (fullBoard, Black)
   assertEqual "No more moves on board" [] validMovesFull
 
-
-{-You will need games that are only a few moves from the end.
-I suggest at least one each that is finished, one move, two moves, and four moves from the end. -}
-
---the games
+{-
+You will need games that are only a few moves from the end.
+I suggest at least one each that is finished, one move, two moves, and four moves from the end.
+valid moves, who has won, who will win, and the best move from
+-}
+-- the games
 
 -- finished where Red has won
 finished :: Game
@@ -139,7 +125,7 @@ finished =
 -- one move from the end
 oneMove :: Game
 oneMove =
-  let (_, player) = emptyGame
+  let (player1, player2) = emptyGame
       board =
         [ [],
           [Just Red, Nothing, Just Red, Just Red],
@@ -147,7 +133,23 @@ oneMove =
           [Just Red, Just Red, Just Black, Just Red],
           [Just Black, Just Black, Just Black, Just Red]
         ]
-   in (emptyBoard, player)
+   in (emptyBoard, player2)
+
+testValidOne :: Test
+testValidOne = do
+  let board = oneMove
+      validMovesOne = validMoves board
+  assertEqual "There is one move away from the end" [0, 1, 2, 3, 4, 5, 6] validMovesOne
+
+testWhoWillWinFin :: Test
+testWhoWillWinFin = do
+  let game = (winningBoard, Black)
+  assertEqual "Who will win in a finished game" (Win Black) (whoWillWin game)
+
+testBestMoveFinished :: Test
+testBestMoveFinished = do
+  let game = (winningBoard, Black) -- needs to be finRedGame but cant get to work
+  assertEqual "Best move in a finished game" 0 (bestMove game)
 
 -- two moves from the end
 twoMoves :: Game
@@ -164,6 +166,12 @@ twoMoves =
         ]
    in (emptyBoard, player2)
 
+testValidDosAway :: Test
+testValidDosAway = do
+  let board = dosAwayGame
+      validMovesDosAway = validMoves board
+  assertEqual "Two Moves from End: Verify valid moves" [0, 1, 2, 3, 4, 5, 6] validMovesDosAway
+
 -- Test case: Four moves from the end
 fourMoves :: Game
 fourMoves =
@@ -179,87 +187,6 @@ fourMoves =
         ]
    in (emptyBoard, player2)
 
-
-
-
--- Test case: One move from the end
-testValidUnoAway :: Test
-testValidUnoAway = do
-  let board = unoAwayGame
-      validMovesUnoAway = validMoves board
-  assertEqual "One Move from End: Verify valid moves" [0, 1, 2, 3, 4, 5, 6] validMovesUnoAway
-
--- Test case: two move from the end
-testValidDosAway :: Test
-testValidDosAway = do
-  let board = dosAwayGame
-      validMovesDosAway = validMoves board
-  assertEqual "Two Moves from End: Verify valid moves" [0, 1, 2, 3, 4, 5, 6] validMovesDosAway
-
--- Test case: Four moves from the end
-testValidCuatroAway :: Test
-testValidCuatroAway = do
-  let board = cuatroAwayGame
-      validMovesCuatroAway = validMoves board
-  assertEqual "Four Moves from End: Verify valid moves" [0, 1, 2, 3, 4, 5, 6] validMovesCuatroAway
-
-
--- tests for who will win - - - - - - - - - - - - - - - - - - - - - - - -
-
--- Test case: Finished game
-testWhoWillWinFin :: Test
-testWhoWillWinFin = do
-  let game = (winningBoard, Black)
-  assertEqual "Who will win in a finished game" (Win Black) (whoWillWin game)
-
--- Test case: One move from the end
-testWhoWillWinOneFromEnd :: Test
-testWhoWillWinOneFromEnd = do
-  let game = unoAwayGame
-  assertEqual "Who will win one move from the end" (Win Red) (whoWillWin game)
-
--- Test case: Two moves from the end
-testWhoWillWinTwoFromEnd :: Test
-testWhoWillWinTwoFromEnd = do
-  let game = dosAwayGame
-  assertEqual "Who will win two moves from the end" Stalemate (whoWillWin game)
-
--- Test case: Four moves from the end
-testWhoWillWinFourFromEnd :: Test
-testWhoWillWinFourFromEnd = do
-  let game = cuatroAwayGame
-  assertEqual "Who will win four moves from the end" (Win Black) (whoWillWin game)
-
--- tests for best move - - - - - - - - - - - - - - - - - - - - - - - - -
-
--- Test case: Finished game
-testBestMoveFinished :: Test
-testBestMoveFinished = do
-  let game = (winningBoard, Black) -- needs to be finRedGame but cant get to work
-  assertEqual "Best move in a finished game" 0 (bestMove game)
-
--- Test case: One move from the end
-testBestMoveOneFromEnd :: Test
-testBestMoveOneFromEnd = do
-  let game = unoAwayGame
-  assertEqual "Best move one move from the end" 6 (bestMove game)
-
--- Test case: Two moves from the end
-testBestMoveTwoFromEnd :: Test
-testBestMoveTwoFromEnd = do
-  let game = dosAwayGame
-  assertEqual "Best move two moves from the end" 3 (bestMove game)
-
--- Test case: Four moves from the end
-testBestMoveFourFromEnd :: Test
-testBestMoveFourFromEnd = do
-  let game = cuatroAwayGame
-  assertEqual "Best move four moves from the end" 2 (bestMove game)
-
-
-
-
-
 -- running test  - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 runTest :: (String, Test) -> IO ()
 runTest (label, test) = do
@@ -267,30 +194,21 @@ runTest (label, test) = do
   putStrLn $ label ++ " - " ++ if result then "Passed" else "Failed"
 
 -- Then, for example, in your list of tests:
+main :: IO ()
+main = do
+  putStrLn "Running tests..."
+  testEmpty
+  testCheckWin
+  testMakeMove
+  testIsValidMove
+  testValidMoves
+  putStrLn "All tests passed!"
+
+{-
 allTests :: [(String, Test)]
 allTests =
-  [ ("\nEmpty Board Test -- Test Valid Moves", testValidEmpty),
-    ("\nFull Board Test", testValidFull),
-    ("\nOne Move from End Test", testValidUnoAway),
-    ("Two Moves from End Test", testValidDosAway),
-    ("Four Moves from End Test", testValidCuatroAway),
-    ("\nFull Board Test -- Test Winner", testWinnerfin),
-    ("One Move from End Test", testWinnerOneFromEnd),
-    ("Two Moves from End Test", testWinnerTwoFromEnd),
-    ("Four Moves from End Test", testWinnerFourFromEnd),
-    ("\nFull Board Test -- WhoWillWin", testWhoWillWinFin),
-    ("One Move from End Test", testWhoWillWinOneFromEnd),
-    ("Two Moves from End Test", testWhoWillWinTwoFromEnd),
-    ("Four Moves from End Test", testWhoWillWinFourFromEnd),
-    ("\nFull Board Test -- Best move", testBestMoveFinished),
-    ("One Move from End Test", testBestMoveOneFromEnd),
-    ("Two Moves from End Test", testBestMoveTwoFromEnd),
-    ("Four Moves from End Test", testBestMoveFourFromEnd)
-    -- ... (other tests)
-    --add checkwin
-  ]
 
 -- Run the tests
---main :: IO ()
---main = mapM_ runTest allTests
-
+main :: IO ()
+main = mapM_ runTest allTests
+-}
