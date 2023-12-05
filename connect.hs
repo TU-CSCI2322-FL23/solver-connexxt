@@ -134,3 +134,30 @@ lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove boa
 validMoves:: Game -> [Move] --dr fogarty suggests:
 validMoves (board, color) = [num | (num, col) <- zip [0..] board, isNothing (head col)]
 
+whoWillWin:: Game -> Winner
+whoWillWin gam =
+    case checkWin gam of
+        Just Red -> Win Red
+        Just Black -> Win Black
+        Tie -> Tie
+        Nothing -> declarePotential (whoNotherHelper (whoHelper ((validMoves gam), gam ))) gam --now I have a list of games where the move has been made
+
+whoHelper:: ([Move], Game) -> [Game]
+whoHelper ((x: rest), currentGame) = 
+    [makeMove currentGame x | x <- validMoves gam]
+
+whoNotherHelper:: [Game] -> [Game]
+whoNotherHelper (x:xs) =
+    [whoWillWin x, whoWillWin xs]
+
+declarePotential:: [Game] -> Game -> Maybe Color
+declarePotential allNext (curboad, curpl) =
+    let
+        checkR = Just Red `elem` allNext
+        checkB = Just Black `elem` allNext
+    in if (curpl == Just Red && checkR == True) then Just Red 
+        else if (curple == Just Black && checkB == True) then Just Black
+        else if (curple != Just Black && checkB == True) then Just Black
+        else if (curple != Just Red && checkB == True) then Just Red
+        else Nothing
+
