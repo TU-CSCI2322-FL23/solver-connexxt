@@ -19,6 +19,17 @@ type Board = [[Maybe Color]] -- write a list of lists laterrr
 type Game = (Board, Color)
 
 type Move = Int -- what's the index into the column?
+
+type Column = [Maybe Color]
+
+type WholeBoard = [Column]
+
+emptyColumn :: Column
+emptyColumn = []
+
+emptyBoard :: Board
+emptyBoard = replicate 7 emptyColumn
+
 -- in connect 4, you can only choose the x coordinate
 -- so you can only look @ which List you're affecting
 

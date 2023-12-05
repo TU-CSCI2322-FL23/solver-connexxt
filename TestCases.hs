@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 module TestCases where
 
 import Connect
@@ -5,6 +6,7 @@ import Control.Monad.Extra
 import Control.Monad.Trans.RWS (RWST (runRWST))
 import Data.List
 import Data.Semigroup
+import System.IO
 import Test.Grader.Core
 import Test.Grader.Eval
 import Test.Grader.Parsing
@@ -16,55 +18,283 @@ import Test.Grader.Tests
 
 -- player2 = (James, Black)
 
--- main :: IO ()
+-- file input to read in and show who would win in each game
 
-makeMove :: Grader String
-makeMove = assess "checkWin" 3 $ do
-  it "returns Just Red when there is a vertical win for Red" $
-    checkWin
-      check
-      [ [Just Red, Just Red, Just Red, Just Red],
+      -- winner of first game should be Just Red for vertical win
+      [
+       [Just Red, Just Red, Just Red, Just Red],
         [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing]
       ]
-      `shouldBe` Just Red
 
-  it "returns Just Black when there is a horizontal win for Black" $
-    checkWin
-      [ [Nothing, Nothing, Nothing, Nothing],
+      -- winner of second game should be Just Black for horizontal win
+[
+       [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing],
         [Just Black, Just Black, Just Black, Just Black],
         [Nothing, Nothing, Nothing, Nothing]
-      ]
-      `shouldBe` Just Black
-
-  it "returns Just Red when there is a diagonal win for Red" $
-    checkWin
-      [ [Just Red, Nothing, Nothing, Nothing],
+]
+      -- winner of third game should be Just Red for diagonal win
+[
+       [Just Red, Nothing, Nothing, Nothing],
         [Nothing, Just Red, Nothing, Nothing],
         [Nothing, Nothing, Just Red, Nothing],
         [Nothing, Nothing, Nothing, Just Red]
-      ]
-      `shouldBe` Just Red
-
-  it "returns Nothing when there is no winner" $
-    checkWin
-      [ [Just Red, Nothing, Nothing, Nothing],
+]
+      -- winner of fourth game should be Nothing for no winner
+[
+      [Just Red, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Nothing],
         [Nothing, Nothing, Nothing, Just Black]
-      ]
-      `shouldBe` Nothing
+      
+]
 
-main :: Grader String
-main = describe "final" $ do
-  describe "sprint" $ do
-    makeMove
+-- estimate 2
 
-runTests :: Int -> Bool -> IO ()
-runTests verb force = do
-  let a = runGrader main
-  format <- makeFormat verb force "project"
-  runRWST a () format
-  return ()
+--games close to the end
+
+[
+       [Just Red, Just Red, Just Red, Nothing],
+        [Just Black, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Just Black, Nothing],
+        [Nothing, Just Black, Nothing, Just Black]
+]
+
+--games where one player is dominating 
+
+[
+       [Nothing, Nothing, Nothing, Nothing],
+        [Just Black, Just Red, Nothing, Just Red],
+        [Just Black, Nothing, Just Red, Just Red],
+        [Just Black, Nothing, Nothing, Just Red]
+]
+
+--games that are evenly matched 
+
+[
+      [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing],
+        [Just Red, Just Red, Just Red, Just Red],
+        [Just Red, Just Red, Just Black, Just Black]
+      
+]
+
+[
+      [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing]
+      
+]
+
+--games near the start
+
+[
+      [Just Red, Nothing, Nothing, Nothing],+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      +++++++++++++++++++++++++
+      +++++++++                      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+
+
+
+
+
+
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+         
+        [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Nothing],
+        [Nothing, Nothing, Nothing, Just Black]
+      
+]
