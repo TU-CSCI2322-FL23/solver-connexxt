@@ -4,6 +4,8 @@ import Data.Maybe
 import Data.Ratio ((%))
 import Data.Tuple (swap)
 import Debug.Trace
+import System.Environment
+import System.Exit 
 
 data Color = Red | Black deriving (Eq, Show)
 
@@ -12,11 +14,13 @@ data Winner = Tie | Win Color deriving (Eq, Show)
 --type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]]-- write a list of lists laterrr
 type Game = (Board, Color)
+
 type Move = Int -- what's the index into the column?
 -- in connect 4, you can only choose the x coordinate
 -- so you can only look @ which List you're affecting
 
 -- Data Winner = Tie | Won Color deriving (Eq, Show) --You canot share constructors, for instance between Color and Winner. The solution is to have Winner *store* a color in one of the constructors
+
 
 -- whosTurn :: Player -> Bool
 -- whosTurn person =
@@ -108,9 +112,9 @@ makeMove (board, playerColor) column
         placePiece (Nothing:rest) color = Just color: rest
         placePiece (piece:rest) color = piece : placePiece rest color 
 
-        nextPlayerColor :: Color -> Color 
+        nextPlayerColor :: Color -> Color
         nextPlayerColor Red = Black
-        nextPlayerColor Black = Red 
+        nextPlayerColor Black = Red
 
 
 isValidMove :: Board -> Move -> Bool
@@ -182,3 +186,34 @@ declarePotential allNext (currentBoard, currentColor) =
         else if currentColor /= Red && checkB then Just Black 
         else if currentColor /= Black && checkR then Just Red 
         else Nothing 
+
+
+defaultDepth :: Int 
+defaultDepth = 5
+main :: IO()
+main = do 
+    args <- getArgs 
+    case args of
+        ["-h"] -> printHelp >> exitSuccess 
+        ["--help"] -> printHelp >> exitSuccess
+        ["-w", filename] -> processFile filename True defaultDepth 
+        ["--winner", filename] -> processFile filename True defaultDepth 
+        ["-d", depth, filename] -> processFile filename False (read depth :: Int)
+        ["--depth", depth, filename] -> processFile filename False (read depth :: Int)
+        [filename] -> processFile filename False defaultDepth 
+        _ -> printUsage >> exitFailure 
+
+printHelp :: IO () 
+printHelp = putStrLn $
+    "Your Program\n\n" ++
+    "Options:\n" ++
+    "   -w, --winner            Output the best move with no cutoff depth.\n"++
+    "   -d <num>, --depth <num>       Specify the cutoff depth (default is 5).\n"++
+    "   -h, --help           Display this help message."
+printUsage :: IO ()
+printUsage = putStrLn "Usage: your_program [-w] [-d <num>] <filename>"
+
+processFile :: FilePath -> Bool -> Int -> IO ()
+processFile filename exhaustive depth = do 
+    -- read the board from file
+    -- perform stuff based on flags 
