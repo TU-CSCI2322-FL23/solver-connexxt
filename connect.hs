@@ -8,17 +8,15 @@ import Debug.Trace
 data Color = Red | Black deriving (Eq, Show)
 
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
-data Winner = Tie | Win Color
+data Winner = Tie | Win Color deriving (Eq, Show)
 --type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]]-- write a list of lists laterrr
 type Game = (Board, Color)
-
 type Move = Int -- what's the index into the column?
 -- in connect 4, you can only choose the x coordinate
 -- so you can only look @ which List you're affecting
 
 -- Data Winner = Tie | Won Color deriving (Eq, Show) --You canot share constructors, for instance between Color and Winner. The solution is to have Winner *store* a color in one of the constructors
-
 
 -- whosTurn :: Player -> Bool
 -- whosTurn person =
@@ -103,14 +101,16 @@ makeMove (board, playerColor) column
         updatedBoard = dropPiece board column playerColor
         dropPiece :: Board -> Move -> Color -> Board
         dropPiece [] _ _ = []
-        dropPiece (c:cols) 0 color = (placePiece c color) : cols
+        dropPiece (c:cols) 0 color = placePiece c color : cols
         dropPiece (c: cols) n color = c : dropPiece cols (n-1) color
         placePiece :: [Maybe Color] -> Color -> [Maybe Color]
         placePiece [] _ = []
         placePiece (Nothing:rest) color = Just color: rest
-        placePiece (piece:rest) color = piece : (placePiece rest color)
+        placePiece (piece:rest) color = piece : placePiece rest color 
+
+        nextPlayerColor :: Color -> Color 
         nextPlayerColor Red = Black
-        nextPlayerColor Black = Red
+        nextPlayerColor Black = Red 
 
 
 isValidMove :: Board -> Move -> Bool
@@ -124,40 +124,61 @@ isValidMove board column
         getColumn (c:cols) 0 = c
         getColumn (c: cols) n = getColumn cols (n-1)
 
--- isValidMove :: Move -> Bool
--- isValidMove move = 
 
+validMoves :: Game -> [Move]
+validMoves (board, color) = [num | (num,col)<- zip [0..] board, isNothing(head col)]
 
-lstValidMoves :: Board -> [Move]
-lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove board col]
+bestMove :: Game -> Move 
+bestMove game@(board, playerColor) = getMaxMove moveOutcomes
+    where
+        moves = validMoves game 
+        moveOutcomes = [(evaluateMove(makeMove game move), move )| move <- moves]
+        evaluateMove :: Game -> Winner 
+        evaluateMove g = whoWillWin g 
 
-validMoves:: Game -> [Move] --dr fogarty suggests:
-validMoves (board, color) = [num | (num, col) <- zip [0..] board, isNothing (head col)]
+        moveOutcome :: Move -> Winner 
+        moveOutcome move = evaluateMove (makeMove game move)
 
+        getMaxMove :: [(Winner, Move)] -> Move 
+        getMaxMove [] = error "No valid Moves"
+        getMaxMove [(outcome, move)] = move 
+        getMaxMove ((outcome, move): rest) =
+            case (moveOutcome move, moveOutcome (getMaxMove rest)) of 
+                (Win color, _) -> if color == playerColor then move else getMaxMove rest 
+                (_, Win _) -> getMaxMove rest 
+                (_,_) -> getMaxMove rest 
+type Rating = Int 
+rateGame :: Game -> Rating 
+rateGame (board, playerColor) = case whoWillWin (board, playerColor) of 
+    Win Red -> 100
+    Win Black -> -100
+    Tie -> 0 
 whoWillWin:: Game -> Winner
-whoWillWin gam =
-    case checkWin gam of
-        Just Red -> Win Red
-        Just Black -> Win Black
-        Tie -> Tie
-        Nothing -> declarePotential (whoNotherHelper (whoHelper ((validMoves gam), gam ))) gam --now I have a list of games where the move has been made
-
+whoWillWin game =
+    case checkWin game of
+        Just win -> win 
+        Nothing -> case declarePotential (whoNotherHelper (whoHelper(validMoves game, game))) game of --now I have a list of games where the move has been made
+            Just color -> Win color
+            Nothing -> Tie 
 whoHelper:: ([Move], Game) -> [Game]
-whoHelper ((x: rest), currentGame) = 
-    [makeMove currentGame x | x <- validMoves gam]
+whoHelper ([],_) = []
+whoHelper (move:rest, currentGame) = 
+    makeMove currentGame move : whoHelper (rest,currentGame)
 
-whoNotherHelper:: [Game] -> [Game]
-whoNotherHelper (x:xs) =
-    [whoWillWin x, whoWillWin xs]
+whoNotherHelper:: [Game] -> [Winner]
+whoNotherHelper [] = [] 
+whoNotherHelper (game:games) = 
+    case whoWillWin game of 
+        Win color -> Win color : whoNotherHelper games 
+        Tie -> Tie : whoNotherHelper games 
 
-declarePotential:: [Game] -> Game -> Maybe Color
-declarePotential allNext (curboad, curpl) =
-    let
-        checkR = Just Red `elem` allNext
-        checkB = Just Black `elem` allNext
-    in if (curpl == Just Red && checkR == True) then Just Red 
-        else if (curple == Just Black && checkB == True) then Just Black
-        else if (curple != Just Black && checkB == True) then Just Black
-        else if (curple != Just Red && checkB == True) then Just Red
-        else Nothing
-
+declarePotential:: [Winner] -> Game -> Maybe Color
+declarePotential allNext (currentBoard, currentColor) = 
+    let 
+        checkR = Win Red `elem` allNext
+        checkB = Win Black `elem` allNext 
+    in if currentColor == Red && checkR then Just Red 
+        else if currentColor == Black && checkB then Just Black
+        else if currentColor /= Red && checkB then Just Black 
+        else if currentColor /= Black && checkR then Just Red 
+        else Nothing 
