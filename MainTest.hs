@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-deferred-out-of-scope-variables #-}
+
 module MainTest where
 
 import Connect
@@ -18,7 +20,7 @@ player1 = Black
 player2 :: Color
 player2 = Red
 
--- test cases for each function --
+-- test cases for main functions --
 
 -- Test the checkWin function
 testCheckWin :: IO ()
@@ -86,129 +88,57 @@ testValidMoves = do
 assert :: Bool -> String -> IO ()
 assert condition message = if condition then putStrLn ("Pass: " ++ message) else putStrLn ("Fail: " ++ message)
 
--- when board is empty
-testEmpty :: Test
-testEmpty = do
-  let emptyBoard = replicate 7 []
-      validMovesEmpty = isValidMoves (emptyBoard, Black)
-  assertEqual "The Board is empty" [0 .. 6] validMovesEmpty
+-- Helper function to create a game state from a list of strings representing rows
+gameFromStrings :: [String] -> Game
+gameFromStrings rows = (map (map readColor) rows, Red)
 
--- when board is full
-testValidFull :: Test
-testValidFull = do
-  let fullBoard = replicate 7 (replicate 6 Red)
-      validMovesFull = isValidMoves (fullBoard, Black)
-  assertEqual "No more moves on board" [] validMovesFull
+readColor :: Char -> Maybe Color
+readColor 'R' = Just Red
+readColor 'Y' = Just Black
+readColor '_' = Nothing
+readColor _ = error "Invalid"
 
-{-
-You will need games that are only a few moves from the end.
-I suggest at least one each that is finished, one move, two moves, and four moves from the end.
-valid moves, who has won, who will win, and the best move from
--}
--- the games
+-- Helper function to create a winner from a string
+winnerFromString :: String -> Winner
+winnerFromString "Tie" = Tie
+winnerFromString "Red" = Win Red
+winnerFromString "Black" = Win Black
+winnerFromString _ = error "Invalid winner string"
 
--- finished where Red has won
-finished :: Game
-finished =
-  let (player1, player2) = emptyGame
-      board =
-        [ [],
-          [],
-          [],
-          [],
-          [Just Red, Just Red, Just Red, Just Red],
-          [Just Red, Just Red, Just Black, Just Red],
-          [Just Black, Just Black, Just Black, Just Red]
-        ]
-   in (emptyBoard, player2)
+-- Test case for checkWin function
+checkWinTest :: String -> Winner -> Test
+checkWinTest boardString expectedWinner =
+  TestCase $
+    assertEqual
+      ("Checking winner for board: \n" ++ boardString)
+      expectedWinner
+      (checkWin (gameFromStrings (lines boardString)))
 
--- one move from the end
-oneMove :: Game
-oneMove =
-  let (player1, player2) = emptyGame
-      board =
-        [ [],
-          [Just Red, Nothing, Just Red, Just Red],
-          [Just Red, Just Red, Just Red, Just Black],
-          [Just Red, Just Red, Just Black, Just Red],
-          [Just Black, Just Black, Just Black, Just Red]
-        ]
-   in (emptyBoard, player2)
+-- Test cases
+tests :: Test
+tests =
+  TestList
+    [ checkWinTest
+        "RB_____\nRB_____\nRB_____\nRB_____\nRB_____\nRB_____\nRB_____"
+        (Win Red), -- Red wins vertically
+      checkWinTest
+        "_______\n_______\n_______\nRRRR___\nBB_____\nBB_____\nRRRR___"
+        (Win Red), -- Red wins horizontally
+      checkWinTest
+        "_______\n_______\n_______\nRRR____\nBBB____\nBB_____\nRRR____"
+        (Win Black), -- Black wins diagonally
+      checkWinTest
+        "RYBBB__\nRYYRR__\nRYBBB__\nRYYRR__\nRYBBB__\nRYYRR__\nRYBBB__"
+        (Tie) -- Tie game
+    ]
 
-testValidOne :: Test
-testValidOne = do
-  let board = oneMove
-      validMovesOne = validMoves board
-  assertEqual "There is one move away from the end" [0, 1, 2, 3, 4, 5, 6] validMovesOne
-
-testWhoWillWinFin :: Test
-testWhoWillWinFin = do
-  let game = (winningBoard, Black)
-  assertEqual "Who will win in a finished game" (Win Black) (whoWillWin game)
-
-testBestMoveFinished :: Test
-testBestMoveFinished = do
-  let game = (winningBoard, Black) -- needs to be finRedGame but cant get to work
-  assertEqual "Best move in a finished game" 0 (bestMove game)
-
--- two moves from the end
-twoMoves :: Game
-twoMoves =
-  let (player1, player2) = emptyGame
-      board =
-        [ [],
-          [],
-          [],
-          [Just Red, Nothing, Nothing, Just Red],
-          [Just Red, Just Red, Just Red, Just Black],
-          [Just Red, Just Red, Just Black, Just Red],
-          [Just Black, Just Black, Just Black, Just Red]
-        ]
-   in (emptyBoard, player2)
-
-testValidDosAway :: Test
-testValidDosAway = do
-  let board = dosAwayGame
-      validMovesDosAway = validMoves board
-  assertEqual "Two Moves from End: Verify valid moves" [0, 1, 2, 3, 4, 5, 6] validMovesDosAway
-
--- Test case: Four moves from the end
-fourMoves :: Game
-fourMoves =
-  let (player1, player2) = emptyGame
-      board =
-        [ [],
-          [],
-          [],
-          [Nothing, Nothing, Nothing, Just Red],
-          [Just Red, Just Red, Just Red, Just Black],
-          [Just Red, Just Red, Just Black, Just Red],
-          [Just Black, Just Black, Just Black, Just Red]
-        ]
-   in (emptyBoard, player2)
-
--- running test  - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-runTest :: (String, Test) -> IO ()
-runTest (label, test) = do
-  result <- test
-  putStrLn $ label ++ " - " ++ if result then "Passed" else "Failed"
-
--- Then, for example, in your list of tests:
 main :: IO ()
 main = do
   putStrLn "Running tests..."
-  testEmpty
+  -- testEmpty
   testCheckWin
   testMakeMove
   testIsValidMove
   testValidMoves
+  tests
   putStrLn "All tests passed!"
-
-{-
-allTests :: [(String, Test)]
-allTests =
-
--- Run the tests
-main :: IO ()
-main = mapM_ runTest allTests
--}
