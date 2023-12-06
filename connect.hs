@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 import Data.List
 import Data.List.Split
 import Data.Maybe
@@ -213,8 +214,32 @@ printHelp = putStrLn $
 printUsage :: IO ()
 printUsage = putStrLn "Usage: your_program [-w] [-d <num>] <filename>"
 
+findBestMove :: Game -> Int -> Move 
+findBestMove game depth =
+    case validMoves game of
+        [] -> error "No valid moves"
+        moves -> snd $ maximumBy (compareMoves game depth) [(evaluateMove (makeMove game move), move) | move <- moves]
+
+
+compareMoves :: Game -> Int -> (Move -> Int, Move) -> (Move -> Int, Move) -> Ordering
+compareMoves game depth (_, move1) (_, move2) =
+    compare (evaluateMove (makeMove game move1) depth) (evaluateMove (makeMove game move2) depth)
+
+
+evaluateMove :: Game -> Move -> Int
+evaluateMove game move = rateGame (makeMove game move)
+
+
 processFile :: FilePath -> Bool -> Int -> IO ()
-processFile filename exhaustive depth = do 
+processFile filename exhaustive depth = do
+    contents <- readFile filename 
+    let initalGame = readGame contents 
+        cutoff = if exhaustive then maxBound else depth 
+        b = findBestMove initalGame cutoff 
+        updatedGame = makeMove initalGame b 
+    putStrLn $ "Inital game state:\n" ++ showGame initalGame 
+    putStrLn $ "Best move:" ++ show bestMove 
+    putStrLn $ "Updated Game state:\n" ++ showGame updatedGame 
     -- read the board from file
     -- perform stuff based on flags 
     -- number 8 from second sprint 
