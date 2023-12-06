@@ -1,14 +1,21 @@
+{-# LANGUAGE BlockArguments #-}
 import Data.List
 import Data.List.Split
 import Data.Maybe
 import Data.Ratio ((%))
 import Data.Tuple (swap)
 import Debug.Trace
+import System.Environment
+import System.Exit 
+import Data.Char
 
-data Color = Red | Black deriving (Eq, Show)
-
+data Color = Red | Black deriving (Eq)
+instance Show Color where
+  show :: Color -> String
+  show Red = "R"
+  show Black = "B"
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
-data Winner = Tie | Win Color
+data Winner = Tie | Win Color deriving (Eq, Show)
 --type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]]-- write a list of lists laterrr
 type Game = (Board, Color)
@@ -103,12 +110,14 @@ makeMove (board, playerColor) column
         updatedBoard = dropPiece board column playerColor
         dropPiece :: Board -> Move -> Color -> Board
         dropPiece [] _ _ = []
-        dropPiece (c:cols) 0 color = (placePiece c color) : cols
+        dropPiece (c:cols) 0 color = placePiece c color : cols
         dropPiece (c: cols) n color = c : dropPiece cols (n-1) color
         placePiece :: [Maybe Color] -> Color -> [Maybe Color]
         placePiece [] _ = []
         placePiece (Nothing:rest) color = Just color: rest
-        placePiece (piece:rest) color = piece : (placePiece rest color)
+        placePiece (piece:rest) color = piece : placePiece rest color 
+
+        nextPlayerColor :: Color -> Color
         nextPlayerColor Red = Black
         nextPlayerColor Black = Red
 
@@ -124,13 +133,149 @@ isValidMove board column
         getColumn (c:cols) 0 = c
         getColumn (c: cols) n = getColumn cols (n-1)
 
--- isValidMove :: Move -> Bool
--- isValidMove move = 
+
+validMoves :: Game -> [Move]
+validMoves (board, color) = [num | (num,col)<- zip [0..] board, isNothing(head col)]
+
+bestMove :: Game -> Move 
+bestMove game@(board, playerColor) = getMaxMove moveOutcomes
+    where
+        moves = validMoves game 
+        moveOutcomes = [(evaluateMove(makeMove game move), move )| move <- moves]
+        evaluateMove :: Game -> Winner 
+        evaluateMove g = whoWillWin g 
+
+        moveOutcome :: Move -> Winner 
+        moveOutcome move = evaluateMove (makeMove game move)
+
+        getMaxMove :: [(Winner, Move)] -> Move 
+        getMaxMove [] = error "No valid Moves"
+        getMaxMove [(outcome, move)] = move 
+        getMaxMove ((outcome, move): rest) =
+            case (moveOutcome move, moveOutcome (getMaxMove rest)) of 
+                (Win color, _) -> if color == playerColor then move else getMaxMove rest 
+                (_, Win _) -> getMaxMove rest 
+                (_,_) -> getMaxMove rest 
+type Rating = Int 
+rateGame :: Game -> Rating 
+rateGame (board, playerColor) = case whoWillWin (board, playerColor) of 
+    Win Red -> 100
+    Win Black -> -100
+    Tie -> 0 
+whoWillWin:: Game -> Winner
+whoWillWin game =
+    case checkWin game of
+        Just win -> win 
+        Nothing -> case declarePotential (whoNotherHelper (whoHelper(validMoves game, game))) game of --now I have a list of games where the move has been made
+            Just color -> Win color
+            Nothing -> Tie 
+whoHelper:: ([Move], Game) -> [Game]
+whoHelper ([],_) = []
+whoHelper (move:rest, currentGame) = 
+    makeMove currentGame move : whoHelper (rest,currentGame)
+
+whoNotherHelper:: [Game] -> [Winner]
+whoNotherHelper [] = [] 
+whoNotherHelper (game:games) = 
+    case whoWillWin game of 
+        Win color -> Win color : whoNotherHelper games 
+        Tie -> Tie : whoNotherHelper games 
+
+declarePotential:: [Winner] -> Game -> Maybe Color 
+declarePotential allNext (currentBoard, currentColor) = 
+    let 
+        checkR = Win Red `elem` allNext
+        checkB = Win Black `elem` allNext 
+    in if currentColor == Red && checkR then Just Red 
+        else if currentColor == Black && checkB then Just Black
+        else if currentColor /= Red && checkB then Just Black 
+        else if currentColor /= Black && checkR then Just Red 
+        else Nothing 
 
 
-lstValidMoves :: Board -> [Move]
-lstValidMoves board = [col | col <- [0..(length(head board)-1)], isValidMove board col]
+defaultDepth :: Int 
+defaultDepth = 5
+main :: IO()
+main = do 
+    args <- getArgs 
+    case args of
+        ["-h"] -> printHelp >> exitSuccess 
+        ["--help"] -> printHelp >> exitSuccess
+        ["-w", filename] -> processFile filename True defaultDepth 
+        ["--winner", filename] -> processFile filename True defaultDepth 
+        ["-d", depth, filename] -> processFile filename False (read depth :: Int)
+        ["--depth", depth, filename] -> processFile filename False (read depth :: Int)
+        [filename] -> processFile filename False defaultDepth 
+        _ -> printUsage >> exitFailure 
 
-validMoves:: Game -> [Move] --dr fogarty suggests:
-validMoves (board, color) = [num | (num, col) <- zip [0..] board, isNothing (head col)]
+printHelp :: IO () 
+printHelp = putStrLn $
+    "Your Program\n\n" ++
+    "Options:\n" ++
+    "   -w, --winner            Output the best move with no cutoff depth.\n"++
+    "   -d <num>, --depth <num>       Specify the cutoff depth (default is 5).\n"++
+    "   -h, --help           Display this help message."
+printUsage :: IO ()
+printUsage = putStrLn "Usage: your_program [-w] [-d <num>] <filename>"
 
+findBestMove :: Game -> Int -> Move 
+findBestMove game depth =
+    case validMoves game of
+        [] -> error "No valid moves"
+        moves -> snd $ maximumBy (compareMoves game depth) [(evaluateMove (makeMove game move), move) | move <- moves]
+
+
+compareMoves :: Game -> Int -> (Move -> Int, Move) -> (Move -> Int, Move) -> Ordering
+compareMoves game depth (_, move1) (_, move2) =
+    compare (evaluateMove (makeMove game move1) depth) (evaluateMove (makeMove game move2) depth)
+
+
+evaluateMove :: Game -> Move -> Int
+evaluateMove game move = rateGame (makeMove game move)
+
+readGame :: String -> Game
+readGame game = (map (map (letterToColor . trim) . splitOn "|" . snd) (filter (even . fst) $ zip [0 ..] (take (length (lines game) - 1) (lines game))), whoTurn $ last (lines game))
+
+trim :: String -> String
+trim = f . f
+  where
+    f = reverse . dropWhile isSpace
+
+letterToColor :: String -> Maybe Color
+letterToColor "R" = Just Red
+letterToColor "B" = Just Black
+letterToColor "" = Nothing
+
+whoTurn :: String -> Color
+whoTurn other
+  | "Red" `isInfixOf` other = Red
+  | "Black" `isInfixOf` other = Black
+
+showGame :: Game -> String
+showGame (board, Red) = showBoard board ++ "\nRed Player's Turn\n"
+showGame (board, Black) = showBoard board ++ "\nBlack Player's Turn\n"
+
+showBoard :: Board -> String
+showBoard [b] = showLine b ++ "\n===---------------------==="
+showBoard (b : board) = showLine b ++ "\n---------------------------\n" ++ showBoard board
+
+showLine :: [Maybe Color] -> String
+showLine lst = intercalate "|" (map showColor lst)
+
+showColor :: Maybe Color -> String
+showColor (Just Red) = " " ++ show Red ++ " "
+showColor (Just Black) = " " ++ show Black ++ " "
+showColor Nothing = "   "
+
+processFile :: FilePath -> Bool -> Int -> IO ()
+processFile filename exhaustive depth = do
+    contents <- readFile filename 
+    let initalGame = readGame contents 
+        cutoff = if exhaustive then maxBound else depth 
+        b = findBestMove initalGame cutoff 
+        updatedGame = makeMove initalGame b 
+    putStrLn $ "Inital game state:\n" ++ showGame initalGame 
+    putStrLn $ "Updated Game state:\n" ++ showGame updatedGame 
+    -- read the board from file
+    -- perform stuff based on flags 
+    -- number 8 from second sprint 
