@@ -8,6 +8,7 @@ import Data.Tuple (swap)
 import Debug.Trace
 import System.Environment
 import System.Exit
+import Data.Char
 
 data Color = Red | Black deriving (Eq, Show)
 

@@ -1,3 +1,5 @@
+module Main where
+import Connect
 import Control.Monad
 import System.IO
 
