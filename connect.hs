@@ -181,7 +181,7 @@ whoNotherHelper (game:games) =
         Win color -> Win color : whoNotherHelper games 
         Tie -> Tie : whoNotherHelper games 
 
-declarePotential:: [Winner] -> Game -> Maybe Color
+declarePotential:: [Winner] -> Game -> Maybe Color 
 declarePotential allNext (currentBoard, currentColor) = 
     let 
         checkR = Win Red `elem` allNext
