@@ -37,8 +37,7 @@ emptyBoard = replicate 7 emptyColumn
 
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 checkWin :: Game -> Maybe Winner -- might want to change input to game type later
-checkWin game@(currentBoard, player) =
-  -- Dr Fogarty Approved !
+checkWin game@(currentBoard, player) = -- Dr Fogarty Approved !
   case findWin [(checkVertical currentBoard), (checkHorizontal currentBoard), (checkDiagonal currentBoard)] of
     Just pl -> Just (Win pl)
     Nothing -> if (validMoves game == []) then Just Tie else Nothing
@@ -71,10 +70,7 @@ checkDiagonal [col1, col2, col3] = Nothing
 checkDiagonal (col1 : col2 : col3 : col4 : rest) =
   let beginning = checkFourAcross col1 (drop 1 col2) (drop 2 col3) (drop 3 col4)
       later = checkDiagonal (col2 : col3 : col4 : rest)
-   in -- checkFourAcross ( drop 1 col1) (drop 2 col2) (drop 3 col3) (drop 4 col4)
-      --  checkFourAcross (drop 2 col1) (drop 3 col2) (drop 4 col3) (drop 5 col4)
-      -- checkFourAcross (drop 3 col1) (drop 4 col2) (drop 5 col3) (drop 6 col4)
-      findWin [beginning, later]
+   in findWin [beginning, later]
 checkDiagonal lst = error "Incorrect Board Dimensions!"
 
 -- FILL OUT HERE
@@ -97,15 +93,10 @@ checkFourAcross z y x a = Nothing
 
 findWin :: [Maybe Color] -> Maybe Color -- Dr Fogarty Approved
 findWin potentialWins =
-  if Just Red `elem` potentialWins && Just Black `elem` potentialWins
-    then error "multiple winners"
-    else
-      if Just Red `elem` potentialWins
-        then Just Red
-        else
-          if Just Black `elem` potentialWins
-            then Just Black
-            else Nothing
+  if Just Red `elem` potentialWins && Just Black `elem` potentialWins then error "multiple winners"
+  else if Just Red `elem` potentialWins then Just Red
+  else if Just Black `elem` potentialWins then Just Black 
+  else Nothing
 
 -- careful ab preferenc e for Just Red, might be issue in sprint 2
 -- findWind [Just Red: Just Red : Just Red : Just Red ] = Just Red
