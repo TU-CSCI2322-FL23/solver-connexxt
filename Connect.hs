@@ -4,12 +4,15 @@ import Data.Maybe
 import Data.Ratio ((%))
 import Data.Tuple (swap)
 import Debug.Trace
+import System.Environment
+import System.Exit
+import Data.Char
 
 data Color = Red | Black deriving (Eq, Show)
 
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
 
-data Winner = Tie | Win Color
+data Winner = Tie | Win Color deriving (Eq, Show)
 
 -- type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]] -- write a list of lists laterrr
