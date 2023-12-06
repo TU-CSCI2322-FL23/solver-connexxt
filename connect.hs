@@ -7,9 +7,13 @@ import Data.Tuple (swap)
 import Debug.Trace
 import System.Environment
 import System.Exit 
+import Data.Char
 
-data Color = Red | Black deriving (Eq, Show)
-
+data Color = Red | Black deriving (Eq)
+instance Show Color where
+  show :: Color -> String
+  show Red = "R"
+  show Black = "B"
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
 data Winner = Tie | Win Color deriving (Eq, Show)
 --type Winner = Maybe Color -- red, black, or null
@@ -229,6 +233,39 @@ compareMoves game depth (_, move1) (_, move2) =
 evaluateMove :: Game -> Move -> Int
 evaluateMove game move = rateGame (makeMove game move)
 
+readGame :: String -> Game
+readGame game = (map (map (letterToColor . trim) . splitOn "|" . snd) (filter (even . fst) $ zip [0 ..] (take (length (lines game) - 1) (lines game))), whoTurn $ last (lines game))
+
+trim :: String -> String
+trim = f . f
+  where
+    f = reverse . dropWhile isSpace
+
+letterToColor :: String -> Maybe Color
+letterToColor "R" = Just Red
+letterToColor "B" = Just Black
+letterToColor "" = Nothing
+
+whoTurn :: String -> Color
+whoTurn other
+  | "Red" `isInfixOf` other = Red
+  | "Black" `isInfixOf` other = Black
+
+showGame :: Game -> String
+showGame (board, Red) = showBoard board ++ "\nRed Player's Turn\n"
+showGame (board, Black) = showBoard board ++ "\nBlack Player's Turn\n"
+
+showBoard :: Board -> String
+showBoard [b] = showLine b ++ "\n===---------------------==="
+showBoard (b : board) = showLine b ++ "\n---------------------------\n" ++ showBoard board
+
+showLine :: [Maybe Color] -> String
+showLine lst = intercalate "|" (map showColor lst)
+
+showColor :: Maybe Color -> String
+showColor (Just Red) = " " ++ show Red ++ " "
+showColor (Just Black) = " " ++ show Black ++ " "
+showColor Nothing = "   "
 
 processFile :: FilePath -> Bool -> Int -> IO ()
 processFile filename exhaustive depth = do
@@ -238,7 +275,6 @@ processFile filename exhaustive depth = do
         b = findBestMove initalGame cutoff 
         updatedGame = makeMove initalGame b 
     putStrLn $ "Inital game state:\n" ++ showGame initalGame 
-    putStrLn $ "Best move:" ++ show bestMove 
     putStrLn $ "Updated Game state:\n" ++ showGame updatedGame 
     -- read the board from file
     -- perform stuff based on flags 
