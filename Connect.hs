@@ -6,12 +6,15 @@ import Data.Maybe
 import Data.Ratio ((%))
 import Data.Tuple (swap)
 import Debug.Trace
+import System.Environment
+import System.Exit
+import Data.Char
 
 data Color = Red | Black deriving (Eq, Show)
 
 type Player = (String, Color) -- instance of the person playing (Name, Red or Black)
 
-data Winner = Tie | Win Color
+data Winner = Tie | Win Color deriving (Eq, Show)
 
 -- type Winner = Maybe Color -- red, black, or null
 type Board = [[Maybe Color]] -- write a list of lists laterrr
@@ -39,8 +42,7 @@ emptyBoard = replicate 7 emptyColumn
 
 -- MAKE FUNCTION TO CATCH USER ERRORS FOR MAKING PLAYERS (MORE THAN 1 OR LESS THAN 2)
 checkWin :: Game -> Maybe Winner -- might want to change input to game type later
-checkWin game@(currentBoard, player) =
-  -- Dr Fogarty Approved !
+checkWin game@(currentBoard, player) = -- Dr Fogarty Approved !
   case findWin [(checkVertical currentBoard), (checkHorizontal currentBoard), (checkDiagonal currentBoard)] of
     Just pl -> Just (Win pl)
     Nothing -> if (validMoves game == []) then Just Tie else Nothing
@@ -73,10 +75,7 @@ checkDiagonal [col1, col2, col3] = Nothing
 checkDiagonal (col1 : col2 : col3 : col4 : rest) =
   let beginning = checkFourAcross col1 (drop 1 col2) (drop 2 col3) (drop 3 col4)
       later = checkDiagonal (col2 : col3 : col4 : rest)
-   in -- checkFourAcross ( drop 1 col1) (drop 2 col2) (drop 3 col3) (drop 4 col4)
-      --  checkFourAcross (drop 2 col1) (drop 3 col2) (drop 4 col3) (drop 5 col4)
-      -- checkFourAcross (drop 3 col1) (drop 4 col2) (drop 5 col3) (drop 6 col4)
-      findWin [beginning, later]
+   in findWin [beginning, later]
 checkDiagonal lst = error "Incorrect Board Dimensions!"
 
 -- FILL OUT HERE
@@ -99,15 +98,10 @@ checkFourAcross z y x a = Nothing
 
 findWin :: [Maybe Color] -> Maybe Color -- Dr Fogarty Approved
 findWin potentialWins =
-  if Just Red `elem` potentialWins && Just Black `elem` potentialWins
-    then error "multiple winners"
-    else
-      if Just Red `elem` potentialWins
-        then Just Red
-        else
-          if Just Black `elem` potentialWins
-            then Just Black
-            else Nothing
+  if Just Red `elem` potentialWins && Just Black `elem` potentialWins then error "multiple winners"
+  else if Just Red `elem` potentialWins then Just Red
+  else if Just Black `elem` potentialWins then Just Black 
+  else Nothing
 
 -- careful ab preferenc e for Just Red, might be issue in sprint 2
 -- findWind [Just Red: Just Red : Just Red : Just Red ] = Just Red
@@ -151,3 +145,146 @@ lstValidMoves board = [col | col <- [0 .. (length (head board) - 1)], isValidMov
 
 validMoves :: Game -> [Move] -- dr fogarty suggests:
 validMoves (board, color) = [num | (num, col) <- zip [0 ..] board, isNothing (head col)]
+
+bestMove :: Game -> Move 
+bestMove game@(board, playerColor) = getMaxMove moveOutcomes
+    where
+        moves = validMoves game 
+        moveOutcomes = [(evaluateMove(makeMove game move), move )| move <- moves]
+        evaluateMove :: Game -> Winner 
+        evaluateMove g = whoWillWin g 
+
+        moveOutcome :: Move -> Winner 
+        moveOutcome move = evaluateMove (makeMove game move)
+
+        getMaxMove :: [(Winner, Move)] -> Move 
+        getMaxMove [] = error "No valid Moves"
+        getMaxMove [(outcome, move)] = move 
+        getMaxMove ((outcome, move): rest) =
+            case (moveOutcome move, moveOutcome (getMaxMove rest)) of 
+                (Win color, _) -> if color == playerColor then move else getMaxMove rest 
+                (_, Win _) -> getMaxMove rest 
+                (_,_) -> getMaxMove rest 
+type Rating = Int 
+rateGame :: Game -> Rating 
+rateGame (board, playerColor) = case whoWillWin (board, playerColor) of 
+    Win Red -> 100
+    Win Black -> -100
+    Tie -> 0 
+whoWillWin:: Game -> Winner
+whoWillWin game =
+    case checkWin game of
+        Just win -> win 
+        Nothing -> case declarePotential (whoNotherHelper (whoHelper(validMoves game, game))) game of --now I have a list of games where the move has been made
+            Just color -> Win color
+            Nothing -> Tie 
+whoHelper:: ([Move], Game) -> [Game]
+whoHelper ([],_) = []
+whoHelper (move:rest, currentGame) = 
+    makeMove currentGame move : whoHelper (rest,currentGame)
+
+whoNotherHelper:: [Game] -> [Winner]
+whoNotherHelper [] = [] 
+whoNotherHelper (game:games) = 
+    case whoWillWin game of 
+        Win color -> Win color : whoNotherHelper games 
+        Tie -> Tie : whoNotherHelper games 
+
+declarePotential:: [Winner] -> Game -> Maybe Color 
+declarePotential allNext (currentBoard, currentColor) = 
+    let 
+        checkR = Win Red `elem` allNext
+        checkB = Win Black `elem` allNext 
+    in if currentColor == Red && checkR then Just Red 
+        else if currentColor == Black && checkB then Just Black
+        else if currentColor /= Red && checkB then Just Black 
+        else if currentColor /= Black && checkR then Just Red 
+        else Nothing 
+
+
+defaultDepth :: Int 
+defaultDepth = 5
+main :: IO()
+main = do 
+    args <- getArgs 
+    case args of
+        ["-h"] -> printHelp >> exitSuccess 
+        ["--help"] -> printHelp >> exitSuccess
+        ["-w", filename] -> processFile filename True defaultDepth 
+        ["--winner", filename] -> processFile filename True defaultDepth 
+        ["-d", depth, filename] -> processFile filename False (read depth :: Int)
+        ["--depth", depth, filename] -> processFile filename False (read depth :: Int)
+        [filename] -> processFile filename False defaultDepth 
+        _ -> printUsage >> exitFailure 
+
+printHelp :: IO () 
+printHelp = putStrLn $
+    "Your Program\n\n" ++
+    "Options:\n" ++
+    "   -w, --winner            Output the best move with no cutoff depth.\n"++
+    "   -d <num>, --depth <num>       Specify the cutoff depth (default is 5).\n"++
+    "   -h, --help           Display this help message."
+printUsage :: IO ()
+printUsage = putStrLn "Usage: your_program [-w] [-d <num>] <filename>"
+
+findBestMove :: Game -> Int -> Move 
+findBestMove game depth =
+    case validMoves game of
+        [] -> error "No valid moves"
+        moves -> snd $ maximumBy (compareMoves game depth) [(evaluateMove (makeMove game move), move) | move <- moves]
+
+
+compareMoves :: Game -> Int -> (Move -> Int, Move) -> (Move -> Int, Move) -> Ordering
+compareMoves game depth (_, move1) (_, move2) =
+    compare (evaluateMove (makeMove game move1) depth) (evaluateMove (makeMove game move2) depth)
+
+
+evaluateMove :: Game -> Move -> Int
+evaluateMove game move = rateGame (makeMove game move)
+
+readGame :: String -> Game
+readGame game = (map (map (letterToColor . trim) . splitOn "|" . snd) (filter (even . fst) $ zip [0 ..] (take (length (lines game) - 1) (lines game))), whoTurn $ last (lines game))
+
+trim :: String -> String
+trim = f . f
+  where
+    f = reverse . dropWhile isSpace
+
+letterToColor :: String -> Maybe Color
+letterToColor "R" = Just Red
+letterToColor "B" = Just Black
+letterToColor "" = Nothing
+
+whoTurn :: String -> Color
+whoTurn other
+  | "Red" `isInfixOf` other = Red
+  | "Black" `isInfixOf` other = Black
+
+showGame :: Game -> String
+showGame (board, Red) = showBoard board ++ "\nRed Player's Turn\n"
+showGame (board, Black) = showBoard board ++ "\nBlack Player's Turn\n"
+
+showBoard :: Board -> String
+showBoard [b] = showLine b ++ "\n===---------------------==="
+showBoard (b : board) = showLine b ++ "\n---------------------------\n" ++ showBoard board
+
+showLine :: [Maybe Color] -> String
+showLine lst = intercalate "|" (map showColor lst)
+
+showColor :: Maybe Color -> String
+showColor (Just Red) = " " ++ "R" ++ " "
+showColor (Just Black) = " " ++ "B" ++ " "
+showColor Nothing = "   "
+
+processFile :: FilePath -> Bool -> Int -> IO ()
+processFile filename exhaustive depth = do
+    contents <- readFile filename 
+    let initalGame = readGame contents 
+        cutoff = if exhaustive then maxBound else depth 
+        b = findBestMove initalGame cutoff 
+        updatedGame = makeMove initalGame b 
+    putStrLn $ "Inital game state:\n" ++ showGame initalGame 
+    putStrLn $ "Updated Game state:\n" ++ showGame updatedGame 
+    -- read the board from file
+    -- perform stuff based on flags 
+    -- number 8 from second sprint 
